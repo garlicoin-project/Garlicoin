@@ -4161,17 +4161,21 @@ bool LoadBlockIndex(const CChainParams& chainparams)
         // Use the provided setting for -txindex in the new database
         fTxIndex = gArgs.GetBoolArg("-txindex", DEFAULT_TXINDEX);
         pblocktree->WriteFlag("txindex", fTxIndex);
+        LogPrintf("%s: transaction index %s\n", __func__, fTxIndex ? "enabled" : "disabled");
 
         // Use the provided setting for -addressindex in the new database
         fAddressIndex = gArgs.GetBoolArg("-addressindex", DEFAULT_ADDRESSINDEX);
         pblocktree->WriteFlag("addressindex", fAddressIndex);
+        LogPrintf("%s: address index %s\n", __func__, fAddressIndex ? "enabled" : "disabled");
 
         // Use the provided setting for -timestampindex in the new database
         fTimestampIndex = gArgs.GetBoolArg("-timestampindex", DEFAULT_TIMESTAMPINDEX);
         pblocktree->WriteFlag("timestampindex", fTimestampIndex);
+        LogPrintf("%s: timestamp index %s\n", __func__, fTimestampIndex ? "enabled" : "disabled");
 
         fSpentIndex = gArgs.GetBoolArg("-spentindex", DEFAULT_SPENTINDEX);
         pblocktree->WriteFlag("spentindex", fSpentIndex);
+        LogPrintf("%s: spent index %s\n", __func__, fSpentIndex ? "enabled" : "disabled");
     }
     return true;
 }
