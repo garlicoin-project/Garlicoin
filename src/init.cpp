@@ -1461,6 +1461,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
                 if (fTimestampIndex != gArgs.GetBoolArg("-timestampindex", DEFAULT_TIMESTAMPINDEX)) {
                     strLoadError = _("You need to rebuild the database using -reindex-chainstate to change -timestampindex");
                     break;
+                }
 
 
                 // Check for changed -prune state.  What we are concerned about is a user who has pruned blocks
