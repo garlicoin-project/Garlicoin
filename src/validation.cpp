@@ -1475,7 +1475,7 @@ enum DisconnectResult
  * @param out The out point that corresponds to the tx input.
  * @return A DisconnectResult as an int
  */
-int ApplyTxInUndo(Coin&& undo, CCoinsViewCache& view, const COutPoint& out)
+int ApplyTxInUndo(Coin undo, CCoinsViewCache& view, const COutPoint& out)
 {
     bool fClean = true;
 
@@ -1501,13 +1501,6 @@ int ApplyTxInUndo(Coin&& undo, CCoinsViewCache& view, const COutPoint& out)
 
     return fClean ? DISCONNECT_OK : DISCONNECT_UNCLEAN;
 }
-
-enum DisconnectResult
-{
-    DISCONNECT_OK,      // All good.
-    DISCONNECT_UNCLEAN, // Rolled back, but UTXO set was inconsistent with block.
-    DISCONNECT_FAILED   // Something else went wrong.
-};
 
 /** Undo the effects of this block (with given index) on the UTXO set represented by coins.
  *  When UNCLEAN or FAILED is returned, view is left in an indeterminate state. */
@@ -1598,7 +1591,7 @@ static DisconnectResult DisconnectBlock(const CBlock& block, CValidationState& s
             for (unsigned int j = tx.vin.size(); j-- > 0;) {
                 const COutPoint &out = tx.vin[j].prevout;
                 int undoHeight = txundo.vprevout[j].nHeight;
-                int res = ApplyTxInUndo(std::move(txundo.vprevout[j]), view, out);
+                int res = ApplyTxInUndo(txundo.vprevout[j], view, out);
                 if (res == DISCONNECT_FAILED) return DISCONNECT_FAILED;
                 fClean = fClean && res != DISCONNECT_UNCLEAN;
                 const CTxIn input = tx.vin[j];
@@ -2457,7 +2450,7 @@ bool static ConnectTip(CValidationState& state, const CChainParams& chainparams,
     LogPrint(BCLog::BENCH, "  - Load block from disk: %.2fms [%.2fs]\n", (nTime2 - nTime1) * 0.001, nTimeReadFromDisk * 0.000001);
     {
         CCoinsViewCache view(pcoinsTip);
-        bool rv = ConnectBlock(blockConnecting, state, pindexNew, view, chainparams);
+        bool rv = ConnectBlock(blockConnecting, state, pindexNew, view);
         GetMainSignals().BlockChecked(blockConnecting, state);
         if (!rv) {
             if (state.IsInvalid())
@@ -3482,7 +3475,7 @@ bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams,
         return error("%s: Consensus::CheckBlock: %s", __func__, FormatStateMessage(state));
     if (!ContextualCheckBlock(block, state, chainparams.GetConsensus(), pindexPrev))
         return error("%s: Consensus::ContextualCheckBlock: %s", __func__, FormatStateMessage(state));
-    if (!ConnectBlock(block, state, &indexDummy, viewNew, chainparams, true))
+    if (!ConnectBlock(block, state, &indexDummy, viewNew, true))
         return false;
     assert(state.IsValid());
 
@@ -3936,7 +3929,7 @@ bool CVerifyDB::VerifyDB(const CChainParams& chainparams, CCoinsView *coinsview,
             CBlock block;
             if (!ReadBlockFromDisk(block, pindex, chainparams.GetConsensus()))
                 return error("VerifyDB(): *** ReadBlockFromDisk failed at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString());
-            if (!ConnectBlock(block, state, pindex, coins, chainparams))
+            if (!ConnectBlock(block, state, pindex, coins))
                 return error("VerifyDB(): *** found unconnectable block at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString());
         }
     }
